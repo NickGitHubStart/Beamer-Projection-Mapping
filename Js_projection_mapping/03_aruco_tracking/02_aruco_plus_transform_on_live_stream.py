@@ -18,11 +18,11 @@ def warp_image(image, H, output_width, output_height):
 # -------------------------------------------------
 # Open video stream (0 = default camera)
 # -------------------------------------------------
-cap = cv2.VideoCapture(1) # je nach Rechner: 0/1/2 durchprobieren (z.B. 0=NVIDIA Broadcast)
+cap = cv2.VideoCapture(0) # check if we want a different marker
 
 # camera calibration
 relative_cam_calibration_path = '../01_intrinsic_calibration/calibration/ProCamCalibration.pckl'
-bool_load_cam_calib= False  # True = mit Kamera-Kalibrierung (Phase 1), False = ueberspringen (fuer Top-Down-Setup ok)
+bool_load_cam_calib= True
 
 # Dewarping
 relative_homographic_tranform_path= '../02_homogrphic_transform/homographic_tranform.pckl'
@@ -128,9 +128,9 @@ def overlay_transparent(background, overlay, x, y):
 
 
 
-# Load transparent image (must be PNG with alpha)
-overlay_img = cv2.imread(overlay_img_path, cv2.IMREAD_UNCHANGED)
-if overlay_img is None or overlay_img.shape[2] != 4:
+# Load transparent image (must be PNG with alpha); keep original for resize each frame
+overlay_src = cv2.imread(overlay_img_path, cv2.IMREAD_UNCHANGED)
+if overlay_src is None or overlay_src.shape[2] != 4:
     raise IOError("Overlay image must be RGBA (PNG with alpha)")
 
 
@@ -142,6 +142,12 @@ aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_50)
 
 parameters = aruco.DetectorParameters()
 parameters.cornerRefinementMethod = aruco.CORNER_REFINE_SUBPIX
+
+# OpenCV >= 4.7: detectMarkers lives on ArucoDetector
+if hasattr(aruco, "ArucoDetector"):
+    _aruco_detector = aruco.ArucoDetector(aruco_dict, parameters)
+else:
+    _aruco_detector = None
 
 print("Press ESC to exit")
 
@@ -182,11 +188,13 @@ while True:
     # ---------------------------------------------
     gray = cv2.cvtColor(dewarped_img, cv2.COLOR_BGR2GRAY)
 
-    corners, ids, rejected = aruco.detectMarkers(
-        gray,
-        aruco_dict,
-        parameters=parameters
-    )
+    if _aruco_detector is not None:
+        corners, ids, rejected = _aruco_detector.detectMarkers(gray)
+    else:
+        corners, ids, rejected = aruco.detectMarkers(
+            gray, aruco_dict, parameters=parameters
+        )
+    
 
 
 
@@ -211,10 +219,14 @@ while True:
             if marker_id==5:
                 cv2.circle(dewarped_img, tuple(center), 5, (255, 255, 255), -1)
 
-                # Optional: resize overlay
-                overlay_img = cv2.resize(overlay_img, (300, 300))
-                 # Put overlay at position (x, y)
-                dewarped_img = overlay_transparent(dewarped_img, overlay_img, x= tuple(center)[0], y= tuple(center)[1])
+                overlay_draw = cv2.resize(overlay_src, (300, 300))
+                cx, cy = int(center[0]), int(center[1])
+                dewarped_img = overlay_transparent(
+                    dewarped_img, overlay_draw, x=cx, y=cy
+                )
+                BeamerImage = overlay_transparent(
+                    BeamerImage, overlay_draw, x=cx, y=cy
+                )
             else:
                 #draw detection beamer
                 cv2.circle(BeamerImage, tuple(center), 30, (0, 255, 255), -1)
