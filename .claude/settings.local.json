@@ -4,7 +4,9 @@
       "Bash(python -c \":*)",
       "Bash(where python:*)",
       "Bash(pip install:*)",
-      "Bash(pip show:*)"
+      "Bash(pip show:*)",
+      "Bash(python 02_aruco_plus_transform_on_live_stream.py)",
+      "Bash(python 02_calc_pose_trans.py)"
     ]
   }
 }

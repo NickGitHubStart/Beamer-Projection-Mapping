@@ -16,9 +16,9 @@ def warp_image(image, H, output_width, output_height):
 
 
 # -------------------------------------------------
-# Open video stream (0 = default camera)
+# Open video stream (0 = default camera) (external beamer camera= 1)
 # -------------------------------------------------
-cap = cv2.VideoCapture(0) # check if we want a different marker
+cap = cv2.VideoCapture(1)  # 0=oft Laptop-Webcam; externe USB oft 1 oder 2 — bei falscher Kamera Zahl anpassen
 
 # camera calibration
 relative_cam_calibration_path = '../01_intrinsic_calibration/calibration/ProCamCalibration.pckl'

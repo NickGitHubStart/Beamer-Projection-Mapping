@@ -101,6 +101,7 @@ aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_5X5_50)
 
 parameters = aruco.DetectorParameters()
 parameters.cornerRefinementMethod = aruco.CORNER_REFINE_SUBPIX
+detector = aruco.ArucoDetector(aruco_dict, parameters)
 
 print("Press ESC to exit")
 
@@ -124,11 +125,7 @@ while True:
     # ---------------------------------------------
     # Detect markers
     # ---------------------------------------------
-    corners, ids, rejected = aruco.detectMarkers(
-        gray,
-        aruco_dict,
-        parameters=parameters
-    )
+    corners, ids, rejected = detector.detectMarkers(gray)
 
     # ---------------------------------------------
     # Sort detections by marker ID
